@@ -51,10 +51,10 @@ BME280 bme; // I2C
 
 #include <Arduino.h>
 
-int sleepcycles = 7;  // every sleepcycle will last 8 secs, total sleeptime will be sleepcycles * 8 sec
+int sleepcycles = 600/8;  // every sleepcycle will last 8 secs, total sleeptime will be sleepcycles * 8 sec
 bool joined = false;
 bool sleeping = false;
-#define LedPin 2     // pin 13 LED is not used, because it is connected to the SPI port
+#define LedPin 6     // pin 13 LED is not used, because it is connected to the SPI port
 
 // This EUI must be in little-endian format, so least-significant-byte
 // first. When copying an EUI from ttnctl output, this means to reverse
@@ -213,6 +213,8 @@ void do_send(osjob_t* j)
     float pressure;
     float alt;
     float hum;
+    float volt;
+    
 #ifdef BME
     bmeForceRead();
     Payload.reset();
@@ -222,6 +224,9 @@ void do_send(osjob_t* j)
     alt = bme.readFloatAltitudeMeters();
     hum = bme.readFloatHumidity();
 
+    volt = 3.3*analogRead(A0)/1024;
+    Serial.println(volt);
+
     //Serial.println (String(temp) );
     //+ " Pressure:=" + String(pressure) + " Humidity:=" + hum + "% Altitude:= " + String(alt));
 
@@ -229,6 +234,7 @@ void do_send(osjob_t* j)
     Payload.addBarometricPressure (1, pressure);
     Payload.addRelativeHumidity (2, hum);
     Payload.addBarometricPressure(3, alt);
+    Payload.addAnalogInput(4,volt);
 
     LMIC_setTxData2(2, Payload.getBuffer(), Payload.getSize(), 0);
     Serial.println(F("Packet queued"));
